@@ -1,26 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import bridge from '@vkontakte/vk-bridge';
-import {
-  Panel,
-  PanelHeader,
-  Header,
-  Button,
-  Group,
-  Cell,
-  Div,
-  Input,
-  FormItem,
-  Switch,
-  Avatar,
-  SimpleCell,
-} from '@vkontakte/vkui';
+import { Panel, Button, Group, Div, Input, FormItem } from '@vkontakte/vkui';
+import { Paintable } from 'paintablejs/react';
+import './styles.css';
 
 const Home = ({ id, go, fetchedUser }) => {
   const [authographText, setAutographText] = React.useState('');
   const [authographs, setAutographs] = React.useState([]);
   const [file, setFile] = React.useState(null);
   const [previewFileUrl, setPreviewFileUrl] = React.useState(null);
+  const [isCanvas, setIsCanvas] = React.useState(null);
+  const [isCanvasActive, setIsCanvasActive] = React.useState(true);
 
   React.useEffect(() => {
     if (file === null) {
@@ -33,6 +24,15 @@ const Home = ({ id, go, fetchedUser }) => {
 
     reader.readAsDataURL(file);
   }, [file]);
+
+  const handleSetFileFromBase64 = async (data) => {
+    if (typeof data === 'string') {
+      const base64 = await fetch(data);
+
+      data = await base64.blob();
+    }
+    setFile(data);
+  };
 
   const addAutographHandle = () => {
     const authograph = {
@@ -83,9 +83,39 @@ const Home = ({ id, go, fetchedUser }) => {
                 disabled={false}
               />
             </FormItem>
-            {previewFileUrl && <img src={previewFileUrl}></img>}
-            <input type="file" onChange={onFileChange} />
-            <Button onClick={addAutographHandle}>Сохранить комментарии</Button>
+            {!(isCanvas && isCanvasActive) && (
+              <Button onClick={() => setIsCanvas(!isCanvas)}>
+                {isCanvas ? 'Хочу загрузить изображение' : 'Хочу нарисовать автограф'}
+              </Button>
+            )}
+            {isCanvas ? (
+              <Paintable
+                width={1024}
+                height={768}
+                color={'#fff'}
+                active={isCanvasActive}
+                thickness={5}
+                useEraser={false}
+                image={previewFileUrl}
+                onSave={(image) => handleSetFileFromBase64(image)}>
+                <div className={'canvas-inner'}></div>
+              </Paintable>
+            ) : (
+              <>
+                <input type="file" onChange={onFileChange} />
+                {previewFileUrl && <img src={previewFileUrl}></img>}
+              </>
+            )}
+            {isCanvas && (
+              <Button onClick={() => setIsCanvasActive(!isCanvasActive)}>
+                {isCanvasActive
+                  ? 'Сохранить нарисованный автограф'
+                  : 'Редактировать нарисованный автограф'}
+              </Button>
+            )}
+            {!(isCanvas && isCanvasActive) && (
+              <Button onClick={addAutographHandle}>Сохранить комментарии</Button>
+            )}
           </Div>
 
           <Div>
