@@ -35,7 +35,12 @@ const Home = ({ id, go, fetchedUser }) => {
   }, [file]);
 
   const addAutographHandle = () => {
-    const authograph = { text: authographText, author: fetchedUser, imageUrl: previewFileUrl };
+    const authograph = {
+      text: authographText,
+      author: fetchedUser,
+      file,
+      imageUrl: previewFileUrl,
+    };
     setAutographs([...authographs, authograph]);
     setAutographText('');
     setFile(null);
@@ -44,12 +49,31 @@ const Home = ({ id, go, fetchedUser }) => {
   const onFileChange = (event) => {
     setFile(event.target.files[0]);
   };
+
+  const shareInHistoryHandle = (authograph) => {
+    bridge.send('VKWebAppShowStoryBox', {
+      background_type: 'image',
+      url: authograph.imageUrl,
+      stickers: [
+        {
+          sticker_type: 'native',
+          sticker: {
+            action_type: 'text',
+            action: {
+              text: `${authograph.author.first_name} ${authograph.author.last_name} ${authograph.text}`,
+            },
+          },
+        },
+      ],
+    });
+  };
+
   return (
     <Panel id={id}>
       <Group>
         <Div>
           <Div>
-            <FormItem top="Название локации">
+            <FormItem top="Текст автографа">
               <Input
                 type="text"
                 value={authographText}
@@ -74,6 +98,9 @@ const Home = ({ id, go, fetchedUser }) => {
                 )}
                 <div>{authograph.text}</div>
                 {authograph.imageUrl && <img src={authograph.imageUrl}></img>}
+                <Button onClick={() => shareInHistoryHandle(authograph)}>
+                  Поделиться в истории
+                </Button>
               </Div>
             ))}
           </Div>
